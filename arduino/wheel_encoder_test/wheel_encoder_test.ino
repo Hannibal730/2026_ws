@@ -8,8 +8,16 @@
 
 volatile long encoderCount = 0;
 
-void encoderISR() {
+void encoderISR_A() {
   if (digitalRead(ENCODER_A) == digitalRead(ENCODER_B)) {
+    encoderCount++;
+  } else {
+    encoderCount--;
+  }
+}
+
+void encoderISR_B() {
+  if (digitalRead(ENCODER_A) != digitalRead(ENCODER_B)) {
     encoderCount++;
   } else {
     encoderCount--;
@@ -22,24 +30,21 @@ void setup() {
   pinMode(ENCODER_A, INPUT_PULLUP);
   pinMode(ENCODER_B, INPUT_PULLUP);
 
-  attachInterrupt(digitalPinToInterrupt(ENCODER_A), encoderISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_A), encoderISR_A, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_B), encoderISR_B, CHANGE);
 
   Serial.println("Encoder test start");
 }
 
 void loop() {
-  static long prev = 0;
   long nowCount;
 
   noInterrupts();
   nowCount = encoderCount;
   interrupts();
 
-  if (nowCount != prev) {
-    Serial.print("ENC: ");
-    Serial.println(nowCount);
-    prev = nowCount;
-  }
+  Serial.print("ENC: ");
+  Serial.println(nowCount);
 
   delay(50);
 }
