@@ -22,13 +22,13 @@ Visualization Manager:
       Update Interval: 0.05
     - Class: rviz_default_plugins/Odometry
       Enabled: true
-      Name: IMU Odometry
+      Name: Encoder IMU Odometry
       Topic:
         Value: /odom
       Shape: Arrow
       Keep: 1
-      Position Tolerance: 1
-      Angle Tolerance: 0.35
+      Position Tolerance: 0.001
+      Angle Tolerance: 0.001
       Color: 255; 40; 40
       Shaft Length: 0.8
       Shaft Radius: 0.04
@@ -41,9 +41,9 @@ Visualization Manager:
           Value: false
     - Class: rviz_default_plugins/Path
       Enabled: true
-      Name: IMU Path
+      Name: Encoder IMU Path
       Topic:
-        Value: /imu/path
+        Value: /odom_path
       Buffer Length: 300
       Line Style: Lines
       Line Width: 0.25
@@ -53,7 +53,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Fixed Frame: odom
-    Frame Rate: 15
+    Frame Rate: 60
   Name: root
   Tools:
     - Class: rviz_default_plugins/Interact

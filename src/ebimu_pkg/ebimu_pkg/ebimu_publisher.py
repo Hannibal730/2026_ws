@@ -18,7 +18,7 @@ def open_serial():
 	port = '/dev/tty' + input('EBIMU Port: /dev/tty').strip()
 	baudrate = input('Baudrate: ').strip()
 	try:
-		return serial.Serial(port=port, baudrate=baudrate, timeout=0.02)
+		return serial.Serial(port=port, baudrate=baudrate, timeout=0.002)
 	except serial.SerialException:
 		print('Serial port error!')
 		raise
@@ -125,7 +125,18 @@ class EbimuPublisher(Node):
 		self.timer = self.create_timer(self.serial_poll_period_sec, self.timer_callback)
 
 	def timer_callback(self):
-		raw = ser.readline().decode('ascii', errors='ignore').strip()
+		try:
+			raw_bytes = ser.readline()
+		except serial.SerialException as exc:
+			self.log_throttled(
+				'serial_read',
+				f'EBIMU serial read error: {exc}. '
+				'Check that the port is connected and not opened by another node.',
+				'warn',
+			)
+			return
+
+		raw = raw_bytes.decode('ascii', errors='ignore').strip()
 		if not raw:
 			self.empty_read_count += 1
 			if self.empty_read_count % 300 == 0:

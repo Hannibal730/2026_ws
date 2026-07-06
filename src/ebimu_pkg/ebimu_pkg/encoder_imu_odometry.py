@@ -2,11 +2,11 @@ import math
 
 import rclpy
 from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import TransformStamped
 from nav_msgs.msg import Odometry
 from nav_msgs.msg import Path
 from rclpy.node import Node
-from sensor_msgs.msg import Imu
 from std_msgs.msg import Float64
 from tf2_ros import TransformBroadcaster
 
@@ -24,6 +24,8 @@ class EncoderImuOdometry(Node):
         self.declare_parameter('sensor_timeout_sec', 0.2)
         self.declare_parameter('odom_frame_id', 'odom')
         self.declare_parameter('base_frame_id', 'base_link')
+        self.declare_parameter('heading_topic', 'imu/gyro_angle/z')
+        self.declare_parameter('heading_sign', -1.0)
 
         self.odom_publish_period = self.period_from_rate(
             float(self.get_parameter('odom_publish_rate_hz').value)
@@ -37,16 +39,21 @@ class EncoderImuOdometry(Node):
         self.sensor_timeout_sec = float(self.get_parameter('sensor_timeout_sec').value)
         self.odom_frame_id = self.get_parameter('odom_frame_id').value
         self.base_frame_id = self.get_parameter('base_frame_id').value
+        self.heading_topic = self.get_parameter('heading_topic').value
+        self.heading_sign = float(self.get_parameter('heading_sign').value)
 
         self.yaw = 0.0
+        self.last_yaw = 0.0
+        self.yaw_rate = 0.0
         self.position = [0.0, 0.0, 0.0]
         self.velocity = [0.0, 0.0, 0.0]
         self.last_time = None
-        self.last_yaw_rate = 0.0
         self.last_speed = 0.0
-        self.last_imu_time = None
+        self.last_heading_time = None
         self.last_speed_time = None
         self.encoder_distance = 0.0
+        self.last_encoder_distance = None
+        self.last_distance_time = None
         self.last_path_position = None
         self.last_path_publish_time = None
         self.last_log_times = {}
@@ -55,24 +62,55 @@ class EncoderImuOdometry(Node):
         self.path_publisher = self.create_publisher(Path, 'odom_path', 10)
         self.tf_broadcaster = TransformBroadcaster(self)
 
-        self.imu_subscription = self.create_subscription(Imu, 'imu/data', self.imu_callback, 10)
+        self.heading_subscription = self.create_subscription(
+            Float64,
+            self.heading_topic,
+            self.heading_callback,
+            10,
+        )
         self.speed_subscription = self.create_subscription(Float64, 'encoder/speed', self.speed_callback, 10)
         self.distance_subscription = self.create_subscription(Float64, 'encoder/distance', self.distance_callback, 10)
 
         self.path = Path()
         self.path.header.frame_id = self.odom_frame_id
         self.odom_timer = self.create_timer(self.odom_publish_period, self.timer_callback)
+        heading_topic_log = self.heading_topic
+        if not heading_topic_log.startswith('/'):
+            heading_topic_log = '/' + heading_topic_log
+        self.get_logger().info(
+            f'Raw encoder+IMU odometry: distance=/encoder/distance, '
+            f'speed=/encoder/speed, heading={heading_topic_log}, '
+            f'heading_sign={self.heading_sign:.1f}'
+        )
 
-    def imu_callback(self, msg):
-        self.last_yaw_rate = msg.angular_velocity.z
-        self.last_imu_time = self.stamp_to_seconds(msg.header.stamp)
+    def heading_callback(self, msg):
+        stamp_time = self.get_clock().now().nanoseconds * 1e-9
+        heading = self.normalize_angle(msg.data * self.heading_sign)
+        dt = None if self.last_heading_time is None else stamp_time - self.last_heading_time
+
+        if dt is not None and dt > 0.0:
+            self.yaw_rate = self.angle_diff(heading, self.last_yaw) / dt
+
+        self.last_yaw = heading
+        self.yaw = heading
+        self.last_heading_time = stamp_time
 
     def speed_callback(self, msg):
         self.last_speed = msg.data
         self.last_speed_time = self.get_clock().now().nanoseconds * 1e-9
 
     def distance_callback(self, msg):
-        self.encoder_distance = msg.data
+        stamp_time = self.get_clock().now().nanoseconds * 1e-9
+        distance = msg.data
+
+        if self.last_encoder_distance is not None:
+            delta_distance = distance - self.last_encoder_distance
+            self.position[0] += math.cos(self.yaw) * delta_distance
+            self.position[1] += math.sin(self.yaw) * delta_distance
+
+        self.encoder_distance = distance
+        self.last_encoder_distance = distance
+        self.last_distance_time = stamp_time
 
     def timer_callback(self):
         stamp = self.get_clock().now()
@@ -89,15 +127,14 @@ class EncoderImuOdometry(Node):
             return
 
         speed = self.value_if_fresh(self.last_speed, self.last_speed_time, stamp_time, 'encoder_speed')
-        yaw_rate = self.value_if_fresh(self.last_yaw_rate, self.last_imu_time, stamp_time, 'imu_gyro_z')
-        yaw_mid = self.yaw + 0.5 * yaw_rate * dt
-        self.yaw = self.normalize_angle(self.yaw + yaw_rate * dt)
+        yaw = self.value_if_fresh(self.yaw, self.last_heading_time, stamp_time, 'imu_heading')
+        yaw_rate = self.value_if_fresh(self.yaw_rate, self.last_heading_time, stamp_time, 'imu_heading_rate')
+        self.value_if_fresh(self.encoder_distance, self.last_distance_time, stamp_time, 'encoder_distance')
+
+        self.yaw = self.normalize_angle(yaw)
         self.velocity[0] = speed
         self.velocity[1] = 0.0
         self.velocity[2] = 0.0
-
-        self.position[0] += math.cos(yaw_mid) * speed * dt
-        self.position[1] += math.sin(yaw_mid) * speed * dt
 
         q = self.yaw_to_quaternion(self.yaw)
         self.publish_odometry(stamp, q, yaw_rate)
@@ -156,15 +193,12 @@ class EncoderImuOdometry(Node):
         self.tf_broadcaster.sendTransform(transform)
 
     def yaw_to_quaternion(self, yaw):
-        q = Imu().orientation
-        q.w = math.cos(yaw * 0.5)
-        q.x = 0.0
-        q.y = 0.0
-        q.z = math.sin(yaw * 0.5)
-        return q
-
-    def stamp_to_seconds(self, stamp):
-        return stamp.sec + stamp.nanosec * 1e-9
+        return Quaternion(
+            x=0.0,
+            y=0.0,
+            z=math.sin(yaw * 0.5),
+            w=math.cos(yaw * 0.5),
+        )
 
     def value_if_fresh(self, value, sample_time, now, name):
         if sample_time is None:
@@ -177,6 +211,9 @@ class EncoderImuOdometry(Node):
 
     def normalize_angle(self, angle):
         return math.atan2(math.sin(angle), math.cos(angle))
+
+    def angle_diff(self, current, previous):
+        return self.normalize_angle(current - previous)
 
     def should_publish(self, stamp_time, last_time, period):
         if period <= 0.0 or last_time is None:

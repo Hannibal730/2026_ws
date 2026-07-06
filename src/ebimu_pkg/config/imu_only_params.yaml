@@ -49,8 +49,8 @@ imu_odometry:
 
 encoder_publisher:
   ros__parameters:
-    serial_port: /dev/ttyUSB0
-    baudrate: 57600
+    serial_port: /dev/ttyACM0
+    baudrate: 115200
     poll_period_sec: 0.01
     meters_per_pulse: 0.0028628686
 
@@ -64,3 +64,5 @@ encoder_imu_odometry:
     sensor_timeout_sec: 0.2
     odom_frame_id: odom
     base_frame_id: base_link
+    heading_topic: imu/gyro_angle/z
+    heading_sign: -1.0

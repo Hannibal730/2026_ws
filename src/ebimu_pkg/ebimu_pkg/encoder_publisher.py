@@ -9,7 +9,7 @@ class EncoderPublisher(Node):
         super().__init__('encoder_publisher')
 
         self.declare_parameter('serial_port', '/dev/ttyUSB0')
-        self.declare_parameter('baudrate', 57600)
+        self.declare_parameter('baudrate', 115200)
         self.declare_parameter('poll_period_sec', 0.01)
         self.declare_parameter('meters_per_pulse', 0.0028628686)
 
