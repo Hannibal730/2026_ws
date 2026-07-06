@@ -19,8 +19,8 @@
 #define MANUAL_MODE 1400
 #define AUTO_MODE 1700
 
-#define POT_MAX 900
-#define POT_MIN 10
+#define POT_MAX 1021
+#define POT_MIN 0
 #define MAX_STEER_TIRE_DEG 24
 
 #define KP 0.05

@@ -14,6 +14,8 @@ ebimu_publisher:
     serial_poll_period_sec: 0.01
     imu_publish_rate_hz: 100.0
     debug_publish_rate_hz: 10.0
+    gyro_integration_dt_sec: 0.01
+    use_integrated_gyro_orientation: true
 
 imu_odometry:
   ros__parameters:

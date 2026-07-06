@@ -65,6 +65,8 @@ class EbimuPublisher(Node):
 		self.declare_parameter('serial_poll_period_sec', 0.01)
 		self.declare_parameter('imu_publish_rate_hz', 100.0)
 		self.declare_parameter('debug_publish_rate_hz', 10.0)
+		self.declare_parameter('gyro_integration_dt_sec', 0.01)
+		self.declare_parameter('use_integrated_gyro_orientation', True)
 
 		self.accel_x_sign = float(self.get_parameter('accel_x_sign').value)
 		self.accel_y_sign = float(self.get_parameter('accel_y_sign').value)
@@ -88,11 +90,23 @@ class EbimuPublisher(Node):
 		self.debug_publish_period = self.period_from_rate(
 			float(self.get_parameter('debug_publish_rate_hz').value)
 		)
+		self.gyro_integration_dt_sec = float(
+			self.get_parameter('gyro_integration_dt_sec').value
+		)
+		self.use_integrated_gyro_orientation = bool(
+			self.get_parameter('use_integrated_gyro_orientation').value
+		)
 
 		self.publisher = self.create_publisher(String, 'ebimu_data', qos_profile)
 		self.roll_publisher = self.create_publisher(Float64, 'imu/roll', qos_profile)
 		self.pitch_publisher = self.create_publisher(Float64, 'imu/pitch', qos_profile)
 		self.yaw_publisher = self.create_publisher(Float64, 'imu/yaw', qos_profile)
+		self.gyro_angle_x_publisher = self.create_publisher(Float64, 'imu/gyro_angle/x', qos_profile)
+		self.gyro_angle_y_publisher = self.create_publisher(Float64, 'imu/gyro_angle/y', qos_profile)
+		self.gyro_angle_z_publisher = self.create_publisher(Float64, 'imu/gyro_angle/z', qos_profile)
+		self.gyro_angle_roll_publisher = self.create_publisher(Float64, 'imu/gyro_angle_deg/roll', qos_profile)
+		self.gyro_angle_pitch_publisher = self.create_publisher(Float64, 'imu/gyro_angle_deg/pitch', qos_profile)
+		self.gyro_angle_yaw_publisher = self.create_publisher(Float64, 'imu/gyro_angle_deg/yaw', qos_profile)
 		self.ax_publisher = self.create_publisher(Float64, 'imu/accel/x', qos_profile)
 		self.ay_publisher = self.create_publisher(Float64, 'imu/accel/y', qos_profile)
 		self.az_publisher = self.create_publisher(Float64, 'imu/accel/z', qos_profile)
@@ -107,6 +121,7 @@ class EbimuPublisher(Node):
 		self.last_imu_publish_time = 0.0
 		self.last_debug_publish_time = 0.0
 		self.last_log_times = {}
+		self.gyro_angle = [0.0, 0.0, 0.0]
 		self.timer = self.create_timer(self.serial_poll_period_sec, self.timer_callback)
 
 	def timer_callback(self):
@@ -163,6 +178,8 @@ class EbimuPublisher(Node):
 			self.log_throttled('finite', 'Discarding IMU sample with NaN/Inf.', 'warn')
 			return
 
+		self.integrate_gyro(gx, gy, gz)
+
 		if not self.first_packet_logged:
 			self.first_packet_logged = True
 			self.get_logger().info(f'First valid EBIMU packet: {raw}')
@@ -191,17 +208,25 @@ class EbimuPublisher(Node):
 
 		if self.should_publish(now_sec, self.last_imu_publish_time, self.imu_publish_period):
 			self.publish_imu(roll_deg, pitch_deg, yaw_deg, gx, gy, gz, ax, ay, az)
+			self.publish_gyro_angles()
 			self.last_imu_publish_time = now_sec
 
 	def publish_imu(self, roll_deg, pitch_deg, yaw_deg, gx, gy, gz, ax, ay, az):
 		msg = Imu()
 		msg.header.stamp = self.get_clock().now().to_msg()
 		msg.header.frame_id = 'imu_link'
-		msg.orientation = self.euler_to_quaternion(
-			math.radians(roll_deg),
-			math.radians(pitch_deg),
-			math.radians(yaw_deg),
-		)
+		if self.use_integrated_gyro_orientation:
+			msg.orientation = self.euler_to_quaternion(
+				self.gyro_angle[0],
+				self.gyro_angle[1],
+				self.gyro_angle[2],
+			)
+		else:
+			msg.orientation = self.euler_to_quaternion(
+				math.radians(roll_deg),
+				math.radians(pitch_deg),
+				math.radians(yaw_deg),
+			)
 		msg.angular_velocity.x = gx
 		msg.angular_velocity.y = gy
 		msg.angular_velocity.z = gz
@@ -225,6 +250,22 @@ class EbimuPublisher(Node):
 			0.0, 0.0, 0.25,
 		]
 		self.imu_publisher.publish(msg)
+
+	def integrate_gyro(self, gx, gy, gz):
+		dt = self.gyro_integration_dt_sec
+		if dt <= 0.0:
+			dt = 0.01
+		self.gyro_angle[0] = self.normalize_angle(self.gyro_angle[0] + gx * dt)
+		self.gyro_angle[1] = self.normalize_angle(self.gyro_angle[1] + gy * dt)
+		self.gyro_angle[2] = self.normalize_angle(self.gyro_angle[2] + gz * dt)
+
+	def publish_gyro_angles(self):
+		self.publish_float(self.gyro_angle_x_publisher, self.gyro_angle[0])
+		self.publish_float(self.gyro_angle_y_publisher, self.gyro_angle[1])
+		self.publish_float(self.gyro_angle_z_publisher, self.gyro_angle[2])
+		self.publish_float(self.gyro_angle_roll_publisher, math.degrees(self.gyro_angle[0]))
+		self.publish_float(self.gyro_angle_pitch_publisher, math.degrees(self.gyro_angle[1]))
+		self.publish_float(self.gyro_angle_yaw_publisher, math.degrees(self.gyro_angle[2]))
 
 	def publish_float(self, publisher, value):
 		msg = Float64()
@@ -269,6 +310,9 @@ class EbimuPublisher(Node):
 
 	def all_finite(self, values):
 		return all(math.isfinite(value) for value in values)
+
+	def normalize_angle(self, angle):
+		return math.atan2(math.sin(angle), math.cos(angle))
 
 	def euler_to_quaternion(self, roll, pitch, yaw):
 		cy = math.cos(yaw * 0.5)
