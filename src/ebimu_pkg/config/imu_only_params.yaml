@@ -1,0 +1,68 @@
+ebimu_publisher:
+  ros__parameters:
+    accel_x_sign: 1.0
+    accel_y_sign: -1.0
+    accel_z_sign: 1.0
+    gyro_x_sign: 1.0
+    gyro_y_sign: -1.0
+    gyro_z_sign: -1.0
+    roll_sign: 1.0
+    pitch_sign: -1.0
+    yaw_sign: -1.0
+    expected_field_count: 9
+    allow_extra_fields_after_accel: true
+    serial_poll_period_sec: 0.01
+    imu_publish_rate_hz: 100.0
+    debug_publish_rate_hz: 10.0
+    gyro_integration_dt_sec: 0.01
+    use_integrated_gyro_orientation: true
+
+imu_odometry:
+  ros__parameters:
+    calibration_duration_sec: 5.0
+    calibration_min_samples: 200
+    forward_accel_axis: y
+    forward_accel_sign: 1.0
+    left_accel_axis: x
+    left_accel_sign: -1.0
+    yaw_gyro_axis: z
+    yaw_rate_sign: -1.0
+    max_dt_sec: 0.2
+    enable_stationary_guard: true
+    forward_accel_deadband: 0.06
+    motion_start_accel_threshold: 0.12
+    motion_continue_accel_deadband: 0.04
+    motion_hold_sec: 1.0
+    yaw_rate_deadband: 0.035
+    tilt_guard_gyro_threshold: 0.35
+    stationary_hold_sec: 0.9
+    speed_zero_threshold: 0.025
+    speed_decay_rate: 0.8
+    forward_accel_gain: 1.5
+    max_forward_speed: 1.5
+    odom_publish_rate_hz: 100.0
+    path_publish_rate_hz: 5.0
+    path_min_distance: 0.02
+    path_max_length: 300
+    odom_frame_id: odom
+    base_frame_id: base_link
+
+encoder_publisher:
+  ros__parameters:
+    serial_port: /dev/ttyACM0
+    baudrate: 115200
+    poll_period_sec: 0.01
+    meters_per_pulse: 0.0028628686
+
+encoder_imu_odometry:
+  ros__parameters:
+    odom_publish_rate_hz: 100.0
+    path_publish_rate_hz: 5.0
+    path_min_distance: 0.02
+    path_max_length: 300
+    max_dt_sec: 0.2
+    sensor_timeout_sec: 0.2
+    odom_frame_id: odom
+    base_frame_id: base_link
+    heading_topic: imu/gyro_angle/z
+    heading_sign: -1.0
