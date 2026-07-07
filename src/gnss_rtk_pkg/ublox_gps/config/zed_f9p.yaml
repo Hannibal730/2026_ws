@@ -8,8 +8,8 @@ ublox_gps_node:
     rate: 15.0                   # in Hz
     nav_rate: 1                 
                                 
-    dynamic_model: portable
-    #사람이 들고 다니는 장치 기준. 차량이면 automotive, 고정 기지국이면 stationary
+    dynamic_model: automotive
+    #사람이 들고 다니는 장치 기준 portable. 차량이면 automotive, 고정 기지국이면 stationary
     
     uart1:
       baudrate: 115200

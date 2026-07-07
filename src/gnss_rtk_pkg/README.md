@@ -1,4 +1,4 @@
-# RTK_GPS_NTRIP
+# gnss_rtk_pkg
 System built on ROS2 Humble distribution to utilize NTRIP for a RTK Global Navigation Satelite System (GNSS). 
 
 RTCM corrections obtained through an NTRIP Client are passed through a ROS Topic and provided to the u-blox driver to obtain high accuracy in GPS/GNSS positioning. 
