@@ -48,3 +48,13 @@ metadata.yaml
 .venv
 
 AGENT.md
+
+# Python cache directories
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Development tools (VS Code)
+.vscode/
+
+
