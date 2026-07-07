@@ -1,10 +1,10 @@
-# Configuration Settings for C94-M8P device
+# Configuration Settings for u-blox ZED-F9R device
 ublox_gps_node:
   ros__parameters:
     debug: 1                    # Range 0-4 (0 means no debug statements will print)
     device: /dev/ttyACM0
     
-    frame_id: gps
+    frame_id: f9r_link
     rate: 15.0                   # in Hz
     nav_rate: 1                 
                                 
