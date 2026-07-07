@@ -2,7 +2,7 @@
 ublox_gps_node:
   ros__parameters:
     debug: 1                    # Range 0-4 (0 means no debug statements will print)
-    device: /dev/ttyACM2
+    device: /dev/ttyACM0
     
     frame_id: gps
     rate: 15.0                   # in Hz
