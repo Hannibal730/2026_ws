@@ -466,7 +466,11 @@ void printEncoderCsv(long count) {
     unsigned long dtMs = now - encoderCsvPrevMs;
     unsigned long elapsedMs = now - encoderTimeZeroMs;
     encoderCsvPrevCount = count;
-    encoderCsvPrevMs = now;
+    // 고정 간격으로 기준 시각을 전진시켜 장기 평균을 정확히 100Hz로 유지 (드리프트 방지).
+    // 과거처럼 = now 로 리셋하면 매 주기 초과분이 누적 손실되어 ~90Hz로 떨어짐.
+    encoderCsvPrevMs += ENCODER_STREAM_INTERVAL_MS;
+    // 루프가 크게 밀려 여러 주기를 놓친 경우에만 현재 시각으로 재동기화.
+    if (now - encoderCsvPrevMs >= ENCODER_STREAM_INTERVAL_MS) encoderCsvPrevMs = now;
 
     Serial.print("ENC,");
     Serial.print(elapsedMs);
@@ -530,13 +534,24 @@ void setup() {
 }
 
 void loop() {
-  // 루프 안정화를 위한 짧은 지연
+  // 시리얼 명령은 매 스핀마다 처리 (고속 폴링 → 반응성 향상)
   parseSerial();
-  delay(LOOP_DELAY_MS);
 
-  parseSerial();
+  // ===== 엔코더 스트리밍 =====
+  // 루프를 고속으로 스핀시키고, 송신은 printEncoderCsv 내부의 10ms 고정 게이트가 담당.
+  // 이렇게 하면 게이트가 10ms 경계에 마이크로초 단위로 정확히 걸려 실측 100Hz가 나온다.
+  long encoder_for_stream;
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { encoder_for_stream = encoderCount; }
+  printEncoderCsv(encoder_for_stream);
+
+  // ===== 제어 루프 주기 게이트 =====
+  // 기존 PID/필터 동특성 보존을 위해 제어 연산은 LOOP_DELAY_MS(2ms) 고정 주기로만 실행.
+  // (delay()를 제거했음: delay는 루프 전체를 막아 스트리밍 주기를 ~90Hz로 떨어뜨렸다.)
   static unsigned long prev_t_us = 0;
   unsigned long t_us = micros();
+  if (prev_t_us != 0 && (t_us - prev_t_us) < (unsigned long)LOOP_DELAY_MS * 1000UL) {
+    return;  // 아직 제어 주기 전 → 다음 스핀에서 스트리밍만 계속 처리
+  }
   unsigned long dt_us = (prev_t_us == 0) ? 1000UL : (t_us - prev_t_us);
   prev_t_us = t_us;
 
@@ -646,7 +661,7 @@ else { // AUTO_MODE
   else       Steer(u_rc);
 }
 
-  printEncoderCsv(encoder_local);
+  // 엔코더 스트리밍은 루프 상단에서 고속 게이트로 처리하므로 여기서는 호출하지 않는다.
 
 #if ENABLE_VERBOSE_DEBUG
   static unsigned long lp = 0;
