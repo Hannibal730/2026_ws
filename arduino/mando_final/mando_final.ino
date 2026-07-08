@@ -645,9 +645,9 @@ double u_used = (Mode_val == AUTO_MODE && sa_ok) ? u_auto : u_rc;
   StopMotor();
 }
 else if (Mode_val == MANUAL_MODE) {
-  // ---- MANUAL은 1번 방식 유지 ----
-  if (Throttle_input > 0.05f)       MoveForward(Throttle_input * 0.6f);
-  else if (Throttle_input < -0.05f) MoveBackward((-Throttle_input) * 0.6f);
+  // ---- MANUAL: 리모컨 설명서 기준(밀면 후진, 당기면 전진)으로 전/후진 반전 ----
+  if (Throttle_input > 0.05f)       MoveBackward(Throttle_input * 0.6f);
+  else if (Throttle_input < -0.05f) MoveForward((-Throttle_input) * 0.6f);
   else { analogWrite(PWM1, 0); analogWrite(PWM2, 0); }
 
   Steer(u_rc);
