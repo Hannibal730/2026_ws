@@ -37,7 +37,7 @@ ros2 run encoder_pkg encoder_publisher --ros-args -p serial_port:=/dev/ttyACM0 -
 
 ## `/imu/*`
 ```
-ros2 run imu_pkg ebimu_publisher --ros-args -p serial_port:=/dev/ttyUSB0 -p baudrate:=115200
+ros2 run imu_pkg imu_publisher --ros-args -p serial_port:=/dev/ttyUSB0 -p baudrate:=115200
 ```
 
 ## `/odom`, `/odom_path`, `/tf`

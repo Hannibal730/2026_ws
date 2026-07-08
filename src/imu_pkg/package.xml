@@ -3,7 +3,7 @@
 <package format="3">
   <name>imu_pkg</name>
   <version>0.0.0</version>
-  <description>EBIMU publisher and debug subscriber nodes.</description>
+  <description>IMU publisher and debug subscriber nodes.</description>
   <maintainer email="e2b@e2box.co.kr">e2box</maintainer>
   <license>TODO: License declaration</license>
 

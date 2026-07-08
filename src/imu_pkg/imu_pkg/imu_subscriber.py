@@ -1,4 +1,4 @@
-#This is a code for wired sensors (ebimu-9dof)
+#This is a code for wired IMU sensors.
 
 import rclpy
 from rclpy.node import Node
@@ -37,12 +37,12 @@ def format_imu_data(values):
 	return str(values)
 
 
-class EbimuSubscriber(Node):
+class ImuSubscriber(Node):
 
 	def __init__(self):
-		super().__init__('ebimu_subscriber')
+		super().__init__('imu_subscriber')
 		qos_profile = QoSProfile(depth=10)
-		self.subscription = self.create_subscription(String, 'ebimu_data', self.callback, qos_profile)
+		self.subscription = self.create_subscription(String, 'imu/raw', self.callback, qos_profile)
 		self.subscription   # prevent unuse variable warning
 
 	def callback(self, msg):
@@ -55,9 +55,9 @@ class EbimuSubscriber(Node):
 def main(args=None):
 	rclpy.init(args=args)
 
-	print("Starting ebimu_subscriber..")
+	print("Starting imu_subscriber..")
 
-	node = EbimuSubscriber()
+	node = ImuSubscriber()
 
 	try:
 		rclpy.spin(node)

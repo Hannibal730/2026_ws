@@ -32,7 +32,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'imu_params_file',
             default_value=default_imu_params,
-            description='Parameter file for the EBIMU node.',
+            description='Parameter file for the IMU node.',
         ),
         DeclareLaunchArgument(
             'encoder_params_file',
@@ -52,12 +52,12 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'imu_serial_port',
             default_value='/dev/ttyUSB0',
-            description='Serial device for the EBIMU sensor.',
+            description='Serial device for the IMU sensor.',
         ),
         DeclareLaunchArgument(
             'imu_baudrate',
             default_value='115200',
-            description='Serial baudrate for the EBIMU sensor.',
+            description='Serial baudrate for the IMU sensor.',
         ),
         DeclareLaunchArgument(
             'encoder_serial_port',
@@ -71,8 +71,8 @@ def generate_launch_description():
         ),
         Node(
             package='imu_pkg',
-            executable='ebimu_publisher',
-            name='ebimu_publisher',
+            executable='imu_publisher',
+            name='imu_publisher',
             output='screen',
             parameters=[
                 imu_params_file,

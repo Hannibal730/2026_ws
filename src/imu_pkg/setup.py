@@ -19,12 +19,12 @@ setup(
     zip_safe=True,
     maintainer='e2box',
     maintainer_email='e2b@e2box.co.kr',
-    description='EBIMU publisher and debug subscriber nodes.',
+    description='IMU publisher and debug subscriber nodes.',
     license='TODO: License declaration',
     entry_points={
         'console_scripts': [
-            'ebimu_publisher = imu_pkg.ebimu_publisher:main',
-            'ebimu_subscriber = imu_pkg.ebimu_subscriber:main',
+            'imu_publisher = imu_pkg.imu_publisher:main',
+            'imu_subscriber = imu_pkg.imu_subscriber:main',
         ],
     },
 )

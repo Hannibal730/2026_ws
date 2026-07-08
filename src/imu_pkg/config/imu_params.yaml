@@ -1,4 +1,4 @@
-ebimu_publisher:
+imu_publisher:
   ros__parameters:
     serial_port: /dev/ttyACM1
     baudrate: 115200
@@ -18,4 +18,3 @@ ebimu_publisher:
     debug_publish_rate_hz: 10.0
     gyro_integration_dt_sec: 0.01
     use_integrated_gyro_orientation: true
-

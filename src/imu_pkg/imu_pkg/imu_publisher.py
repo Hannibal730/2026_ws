@@ -16,10 +16,10 @@ EXPECTED_FIELD_COUNT = 9
 GRAVITY = 9.80665
 
 
-class EbimuPublisher(Node):
+class ImuPublisher(Node):
 
 	def __init__(self):
-		super().__init__('ebimu_publisher')
+		super().__init__('imu_publisher')
 		debug_qos_profile = QoSProfile(depth=10)
 		imu_qos_profile = QoSProfile(depth=50)
 		imu_qos_profile.reliability = QoSReliabilityPolicy.BEST_EFFORT
@@ -76,9 +76,9 @@ class EbimuPublisher(Node):
 		)
 
 		self.ser = self.open_serial()
-		self.configure_ebimu_runtime_only()
+		self.configure_imu_runtime_only()
 
-		self.publisher = self.create_publisher(String, 'ebimu_data', debug_qos_profile)
+		self.publisher = self.create_publisher(String, 'imu/raw', debug_qos_profile)
 		self.roll_publisher = self.create_publisher(Float64, 'imu/roll', debug_qos_profile)
 		self.pitch_publisher = self.create_publisher(Float64, 'imu/pitch', debug_qos_profile)
 		self.yaw_publisher = self.create_publisher(Float64, 'imu/yaw', debug_qos_profile)
@@ -114,7 +114,7 @@ class EbimuPublisher(Node):
 	def open_serial(self):
 		try:
 			self.get_logger().info(
-				f'Opening EBIMU serial port {self.serial_port} @ {self.baudrate}'
+				f'Opening IMU serial port {self.serial_port} @ {self.baudrate}'
 			)
 			return serial.Serial(
 				port=self.serial_port,
@@ -122,10 +122,10 @@ class EbimuPublisher(Node):
 				timeout=0.002,
 			)
 		except serial.SerialException as exc:
-			self.get_logger().error(f'Failed to open EBIMU serial port: {exc}')
+			self.get_logger().error(f'Failed to open IMU serial port: {exc}')
 			raise
 
-	def configure_ebimu_runtime_only(self):
+	def configure_imu_runtime_only(self):
 		commands = [
 			'<start>',
 			'<soc1>',
@@ -141,7 +141,7 @@ class EbimuPublisher(Node):
 			self.ser.flush()
 			time.sleep(0.08)
 		self.get_logger().info(
-			'EBIMU runtime config sent: ASCII + Euler + gyro + accel, 100 Hz'
+			'IMU runtime config sent: ASCII + Euler + gyro + accel, 100 Hz'
 		)
 
 	def timer_callback(self):
@@ -150,7 +150,7 @@ class EbimuPublisher(Node):
 		except serial.SerialException as exc:
 			self.log_throttled(
 				'serial_read',
-				f'EBIMU serial read error: {exc}. '
+				f'IMU serial read error: {exc}. '
 				'Check that the port is connected and not opened by another node.',
 				'warn',
 			)
@@ -163,7 +163,7 @@ class EbimuPublisher(Node):
 			if self.last_valid_packet_time <= 0.0 or now_sec - self.last_valid_packet_time > 1.0:
 				self.log_throttled(
 					'no_serial_data',
-					'No valid EBIMU serial packet for more than 1 second. '
+					'No valid IMU serial packet for more than 1 second. '
 					'Check power, port, baudrate, and output mode.',
 					'warn',
 				)
@@ -193,7 +193,7 @@ class EbimuPublisher(Node):
 				return
 			self.log_throttled(
 				'extra_fields',
-				f'EBIMU packet has {len(values)} fields; using first '
+				f'IMU packet has {len(values)} fields; using first '
 				f'{self.expected_field_count} and ignoring trailing fields.',
 			)
 			values = values[:self.expected_field_count]
@@ -217,10 +217,10 @@ class EbimuPublisher(Node):
 
 		if not self.first_packet_logged:
 			self.first_packet_logged = True
-			self.get_logger().info(f'First valid EBIMU packet: {raw}')
+			self.get_logger().info(f'First valid IMU packet: {raw}')
 			self.get_logger().info(
 				'Expected fields: roll,pitch,yaw,gx,gy,gz,ax,ay,az; '
-				'accel unit from EBIMU manual is g, converted to m/s^2'
+				'accel unit from IMU manual is g, converted to m/s^2'
 			)
 
 		now_sec = self.get_clock().now().nanoseconds * 1e-9
@@ -332,7 +332,7 @@ class EbimuPublisher(Node):
 	def log_bad_packet(self, raw, field_count):
 		self.log_throttled(
 			'bad_packet',
-			'Discarding EBIMU packet: '
+			'Discarding IMU packet: '
 			f'field_count={field_count}, expected={self.expected_field_count}, '
 			f'raw="{raw}", mode=ASCII Euler+gyro+accel',
 			'warn',
@@ -350,7 +350,7 @@ class EbimuPublisher(Node):
 		valid_hz = self.rate_window_valid_count / elapsed
 		imu_hz = self.rate_window_publish_count / elapsed
 		self.get_logger().info(
-			f'EBIMU rate: valid_packets={valid_hz:.1f} Hz, '
+			f'IMU rate: valid_packets={valid_hz:.1f} Hz, '
 			f'imu/data={imu_hz:.1f} Hz, '
 			f'total_valid={self.valid_packet_count}, '
 			f'total_published={self.imu_publish_count}, '
@@ -401,8 +401,8 @@ class EbimuPublisher(Node):
 
 def main(args=None):
 	rclpy.init(args=args)
-	print('Starting ebimu_publisher..')
-	node = EbimuPublisher()
+	print('Starting imu_publisher..')
+	node = ImuPublisher()
 	try:
 		rclpy.spin(node)
 	finally:
