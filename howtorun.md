@@ -18,31 +18,33 @@ source install/setup.bash
 sudo chmod 666 /dev/tty*
 ```
 
-만일 Workspace가 `/home/dev` 안에 있을 때:
-```
-cd /home/$(whoami)/dev/Mando2026_ws
-deactivate 2>/dev/null || true
-source /opt/ros/humble/setup.bash
-colcon build
-source install/setup.bash
-sudo chmod 666 /dev/tty*
-```
-
-
 # Publisher
 ## `/encoder/*`
 ```
-ros2 run encoder_pkg encoder_publisher --ros-args -p serial_port:=/dev/ttyACM0 -p baudrate:=115200
+ros2 run encoder_pkg encoder_publisher --ros-args \
+  --params-file src/encoder_pkg/config/encoder_params.yaml \
+  -p serial_port:=/dev/ttyACM0 \
+  -p baudrate:=115200
 ```
 
 ## `/imu/*`
 ```
-ros2 run imu_pkg imu_publisher --ros-args -p serial_port:=/dev/ttyUSB0 -p baudrate:=115200
+ros2 run imu_pkg imu_publisher --ros-args \
+  --params-file src/imu_pkg/config/imu_params.yaml \
+  -p serial_port:=/dev/ttyUSB0 \
+  -p baudrate:=115200
 ```
 
-## `/odom`, `/odom_path`, `/tf`
+## `/odom/*`, `/tf`
 ```
-ros2 run odom_pkg encoder_imu_odometry --ros-args --params-file src/odom_pkg/config/odom_params.yaml
+ros2 run odom_pkg encoder_imu_odometry --ros-args \
+  --params-file src/odom_pkg/config/odom_params.yaml \
+  -p publish_tf:=false
+```
+
+## `/odometry/filtered/*`
+```
+ros2 run odom_pkg ekf_filter
 ```
 
 ## `/f9p/*`, `/ublox_gps_node/*`
@@ -55,14 +57,9 @@ ros2 launch ublox_gps ublox_f9p_launch.py serial_port:=/dev/ttyUSB0 baudrate:=11
 ros2 launch ublox_gps ublox_f9r_launch.py serial_port:=/dev/ttyUSB1 baudrate:=115200
 ```
 
-# RVIZ
-## RVIZ만 실행
+# ROS BAG 만들기
 ```
-rviz2 -d install/rviz_pkg/share/rviz_pkg/config/imu_odometry.rviz
-```
-## `/encoder/*`, `/imu/*`, `/odom`도 같이 실행
-```
-ros2 launch rviz_pkg encoder_imu_rviz.launch.py imu_serial_port:=/dev/ttyUSB0 imu_baudrate:=115200 encoder_serial_port:=/dev/ttyACM0 encoder_baudrate:=115200
+ros2 bag record -e "(/imu/.*|/encoder/.*)"
 ```
 
 ---

@@ -8,6 +8,7 @@ from nav_msgs.msg import Odometry
 from nav_msgs.msg import Path
 from rclpy.node import Node
 from std_msgs.msg import Float64
+from tf2_ros import StaticTransformBroadcaster
 from tf2_ros import TransformBroadcaster
 
 
@@ -24,8 +25,9 @@ class EncoderImuOdometry(Node):
         self.declare_parameter('sensor_timeout_sec', 0.2)
         self.declare_parameter('odom_frame_id', 'odom')
         self.declare_parameter('base_frame_id', 'base_link')
+        self.declare_parameter('publish_tf', True)
+        self.declare_parameter('imu_offset_x', 0.85)
         self.declare_parameter('heading_topic', 'imu/gyro_angle/z')
-        self.declare_parameter('heading_sign', -1.0)
 
         self.odom_publish_period = self.period_from_rate(
             float(self.get_parameter('odom_publish_rate_hz').value)
@@ -39,8 +41,9 @@ class EncoderImuOdometry(Node):
         self.sensor_timeout_sec = float(self.get_parameter('sensor_timeout_sec').value)
         self.odom_frame_id = self.get_parameter('odom_frame_id').value
         self.base_frame_id = self.get_parameter('base_frame_id').value
+        self.publish_tf_enabled = bool(self.get_parameter('publish_tf').value)
+        self.imu_offset_x = float(self.get_parameter('imu_offset_x').value)
         self.heading_topic = self.get_parameter('heading_topic').value
-        self.heading_sign = float(self.get_parameter('heading_sign').value)
 
         self.yaw = 0.0
         self.last_yaw = 0.0
@@ -64,9 +67,11 @@ class EncoderImuOdometry(Node):
         self.encoder_imu_odom_publisher = self.create_publisher(Odometry, 'encoder_imu/odom', 10)
         self.encoder_odom_publisher = self.create_publisher(Odometry, 'encoder/odom', 10)
         self.path_publisher = self.create_publisher(Path, 'encoder_imu/path', 10)
-        self.legacy_path_publisher = self.create_publisher(Path, 'odom_path', 10)
+        self.legacy_path_publisher = self.create_publisher(Path, '/odom/path', 10)
         self.encoder_path_publisher = self.create_publisher(Path, 'encoder/path', 10)
-        self.tf_broadcaster = TransformBroadcaster(self)
+        self.tf_broadcaster = TransformBroadcaster(self) if self.publish_tf_enabled else None
+        self.static_tf_broadcaster = StaticTransformBroadcaster(self)
+        self.publish_sensor_transforms()
 
         self.heading_subscription = self.create_subscription(
             Float64,
@@ -87,13 +92,29 @@ class EncoderImuOdometry(Node):
             heading_topic_log = '/' + heading_topic_log
         self.get_logger().info(
             f'Raw encoder+IMU odometry: distance=/encoder/distance, '
-            f'speed=/encoder/speed, heading={heading_topic_log}, '
-            f'heading_sign={self.heading_sign:.1f}'
+            f'speed=/encoder/speed, heading={heading_topic_log}'
         )
+
+    def publish_sensor_transforms(self):
+        stamp = self.get_clock().now().to_msg()
+        transforms = []
+        for child_frame, x_offset in (
+            ('encoder_link', 0.0),
+            ('imu_link', self.imu_offset_x),
+        ):
+            transform = TransformStamped()
+            transform.header.stamp = stamp
+            transform.header.frame_id = self.base_frame_id
+            transform.child_frame_id = child_frame
+            transform.transform.translation.x = x_offset
+            transform.transform.rotation.w = 1.0
+            transforms.append(transform)
+
+        self.static_tf_broadcaster.sendTransform(transforms)
 
     def heading_callback(self, msg):
         stamp_time = self.get_clock().now().nanoseconds * 1e-9
-        heading = self.normalize_angle(msg.data * self.heading_sign)
+        heading = self.normalize_angle(msg.data)
         dt = None if self.last_heading_time is None else stamp_time - self.last_heading_time
 
         if dt is not None and dt > 0.0:
@@ -149,7 +170,8 @@ class EncoderImuOdometry(Node):
         encoder_q = self.yaw_to_quaternion(0.0)
         self.publish_odometry(stamp, q, yaw_rate)
         self.publish_encoder_odometry(stamp, encoder_q)
-        self.publish_tf(stamp, q)
+        if self.publish_tf_enabled:
+            self.publish_tf(stamp, q)
 
         if self.should_publish(stamp_time, self.last_path_publish_time, self.path_publish_period):
             self.publish_path(stamp, q)

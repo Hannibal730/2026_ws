@@ -41,11 +41,8 @@ class ImuOdometry(Node):
 		self.declare_parameter('calibration_duration_sec', 5.0)
 		self.declare_parameter('calibration_min_samples', 200)
 		self.declare_parameter('forward_accel_axis', 'y')
-		self.declare_parameter('forward_accel_sign', 1.0)
 		self.declare_parameter('left_accel_axis', 'x')
-		self.declare_parameter('left_accel_sign', -1.0)
 		self.declare_parameter('yaw_gyro_axis', 'z')
-		self.declare_parameter('yaw_rate_sign', -1.0)
 		self.declare_parameter('max_dt_sec', 0.2)
 		self.declare_parameter('enable_stationary_guard', True)
 		self.declare_parameter('forward_accel_deadband', 0.06)
@@ -73,11 +70,8 @@ class ImuOdometry(Node):
 			self.get_parameter('calibration_min_samples').value
 		)
 		self.forward_accel_axis = self.get_parameter('forward_accel_axis').value
-		self.forward_accel_sign = float(self.get_parameter('forward_accel_sign').value)
 		self.left_accel_axis = self.get_parameter('left_accel_axis').value
-		self.left_accel_sign = float(self.get_parameter('left_accel_sign').value)
 		self.yaw_gyro_axis = self.get_parameter('yaw_gyro_axis').value
-		self.yaw_rate_sign = float(self.get_parameter('yaw_rate_sign').value)
 		self.max_dt_sec = float(self.get_parameter('max_dt_sec').value)
 		self.enable_stationary_guard = bool(
 			self.get_parameter('enable_stationary_guard').value
@@ -161,17 +155,17 @@ class ImuOdometry(Node):
 		forward_accel_raw = self.select_axis(
 			msg.linear_acceleration,
 			self.forward_accel_axis,
-			self.forward_accel_sign,
+			1.0,
 		)
 		left_accel_raw = self.select_axis(
 			msg.linear_acceleration,
 			self.left_accel_axis,
-			self.left_accel_sign,
+			1.0,
 		)
 		yaw_rate_raw = self.select_axis(
 			msg.angular_velocity,
 			self.yaw_gyro_axis,
-			self.yaw_rate_sign,
+			1.0,
 		)
 		tilt_gyro = math.hypot(msg.angular_velocity.x, msg.angular_velocity.y)
 

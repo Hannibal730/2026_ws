@@ -13,14 +13,12 @@ class EncoderPublisher(Node):
         self.declare_parameter('baudrate', 115200)
         self.declare_parameter('poll_period_sec', 0.01)
         self.declare_parameter('meters_per_pulse', 0.0028628686)
-        self.declare_parameter('throttle_cmd_topic', 'encoder/throttle_cmd')
 
         self.serial_port = self.get_parameter('serial_port').value
         self.baudrate = int(self.get_parameter('baudrate').value)
         # poll_period는 sample_dt를 못 구했을 때의 fallback dt로만 사용한다.
         self.poll_period = float(self.get_parameter('poll_period_sec').value)
         self.meters_per_pulse = float(self.get_parameter('meters_per_pulse').value)
-        self.throttle_cmd_topic = self.get_parameter('throttle_cmd_topic').value
 
         self.last_elapsed_ms = None
         self.last_count = None
@@ -28,12 +26,6 @@ class EncoderPublisher(Node):
 
         self.distance_publisher = self.create_publisher(Float64, 'encoder/distance', 10)
         self.speed_publisher = self.create_publisher(Float64, 'encoder/speed', 10)
-        self.throttle_subscription = self.create_subscription(
-            Float64,
-            self.throttle_cmd_topic,
-            self.throttle_callback,
-            10,
-        )
 
         self.ser = self.open_serial()
 
@@ -101,16 +93,6 @@ class EncoderPublisher(Node):
         msg = Float64()
         msg.data = value
         publisher.publish(msg)
-
-    def throttle_callback(self, msg):
-        throttle = max(-1.0, min(1.0, float(msg.data)))
-        line = f'TH {throttle:.3f}\n'.encode('ascii')
-        try:
-            with self._serial_lock:
-                self.ser.write(line)
-                self.ser.flush()
-        except serial.SerialException as exc:
-            self.get_logger().error(f'Failed to write throttle command: {exc}')
 
     def stop(self):
         stop_line = b'TH 0.000\n'

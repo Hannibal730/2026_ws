@@ -32,10 +32,9 @@ class ImuPublisher(Node):
 		self.declare_parameter('accel_z_sign', 1.0)
 		self.declare_parameter('gyro_x_sign', 1.0)
 		self.declare_parameter('gyro_y_sign', -1.0)
-		self.declare_parameter('gyro_z_sign', -1.0)
 		self.declare_parameter('roll_sign', 1.0)
 		self.declare_parameter('pitch_sign', -1.0)
-		self.declare_parameter('yaw_sign', -1.0)
+		self.declare_parameter('yaw_sign', 1.0)
 		self.declare_parameter('expected_field_count', EXPECTED_FIELD_COUNT)
 		self.declare_parameter('allow_extra_fields_after_accel', True)
 		self.declare_parameter('serial_poll_period_sec', 0.005)
@@ -51,7 +50,6 @@ class ImuPublisher(Node):
 		self.accel_z_sign = float(self.get_parameter('accel_z_sign').value)
 		self.gyro_x_sign = float(self.get_parameter('gyro_x_sign').value)
 		self.gyro_y_sign = float(self.get_parameter('gyro_y_sign').value)
-		self.gyro_z_sign = float(self.get_parameter('gyro_z_sign').value)
 		self.roll_sign = float(self.get_parameter('roll_sign').value)
 		self.pitch_sign = float(self.get_parameter('pitch_sign').value)
 		self.yaw_sign = float(self.get_parameter('yaw_sign').value)
@@ -203,7 +201,7 @@ class ImuPublisher(Node):
 		yaw_deg = values[2] * self.yaw_sign
 		gx = math.radians(values[3] * self.gyro_x_sign)
 		gy = math.radians(values[4] * self.gyro_y_sign)
-		gz = math.radians(values[5] * self.gyro_z_sign)
+		gz = math.radians(values[5] * self.yaw_sign)
 		ax = values[6] * self.accel_x_sign * GRAVITY
 		ay = values[7] * self.accel_y_sign * GRAVITY
 		az = values[8] * self.accel_z_sign * GRAVITY
@@ -238,7 +236,7 @@ class ImuPublisher(Node):
 			self.publish_float(self.yaw_publisher, yaw_deg)
 			self.publish_float(self.gx_publisher, values[3] * self.gyro_x_sign)
 			self.publish_float(self.gy_publisher, values[4] * self.gyro_y_sign)
-			self.publish_float(self.gz_publisher, values[5] * self.gyro_z_sign)
+			self.publish_float(self.gz_publisher, values[5] * self.yaw_sign)
 			self.publish_float(self.ax_publisher, ax)
 			self.publish_float(self.ay_publisher, ay)
 			self.publish_float(self.az_publisher, az)

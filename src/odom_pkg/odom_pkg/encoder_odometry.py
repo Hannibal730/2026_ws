@@ -47,7 +47,7 @@ class EncoderOdometry(Node):
         self.current_speed = 0.0
 
         self.odom_publisher = self.create_publisher(Odometry, 'odom', 10)
-        self.path_publisher = self.create_publisher(Path, 'odom_path', 10)
+        self.path_publisher = self.create_publisher(Path, '/odom/path', 10)
         self.tf_broadcaster = TransformBroadcaster(self)
 
         self.speed_subscription = self.create_subscription(Float64, 'encoder/speed', self.speed_callback, 10)

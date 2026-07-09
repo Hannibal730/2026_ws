@@ -6,11 +6,8 @@ imu_odometry:
     calibration_duration_sec: 5.0
     calibration_min_samples: 200
     forward_accel_axis: "y"
-    forward_accel_sign: 1.0
     left_accel_axis: "x"
-    left_accel_sign: -1.0
     yaw_gyro_axis: "z"
-    yaw_rate_sign: -1.0
     max_dt_sec: 0.2
     enable_stationary_guard: true
     forward_accel_deadband: 0.06
@@ -53,4 +50,3 @@ encoder_imu_odometry:
     odom_frame_id: odom
     base_frame_id: base_link
     heading_topic: imu/gyro_angle/z
-    heading_sign: -1.0

@@ -24,7 +24,6 @@ setup(
     entry_points={
         'console_scripts': [
             'encoder_publisher = encoder_pkg.encoder_publisher:main',
-            'encoder_5m_demo = encoder_pkg.encoder_5m_demo:main',
         ],
     },
 )
