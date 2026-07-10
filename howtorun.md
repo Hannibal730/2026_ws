@@ -60,9 +60,7 @@ ros2 run odom_pkg encoder_imu_odometry --ros-args \
 ```
 
 ## `/odom/ekf_encoder_imu*`
-EKF는 `/odom/encoder` + `/imu/data`를 융합한다. 이 노드는 `ekf_node`를 실행하고 필터 결과 path를 만들 뿐, 입력원을 직접 띄우지 않는다. 따라서 실행 전에 EKF 입력원을 먼저 켜야 한다:
-- `/imu/*` publisher (위 `/imu/*` 항목)
-- `/odom/encoder*` (위 `/odom/encoder*` 항목, `publish_tf:=false`)
+EKF는 `/odom/encoder` + `/imu/data`를 융합한다. 이 노드는 `encoder_odometry`를 **같은 프로세스에서 내부 실행**(`publish_tf:=false`)하여 `/odom/encoder`를 직접 발행하고, `ekf_node`를 띄운 뒤 필터 결과 path를 만든다. 따라서 별도로 `encoder_odometry`를 실행할 필요는 없고, `/imu/data`(위 `/imu/*` 항목)만 미리 켜져 있으면 된다.
 ```
 ros2 run odom_pkg ekf_encoder_imu_odometry
 ```

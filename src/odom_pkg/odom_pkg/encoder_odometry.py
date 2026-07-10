@@ -13,8 +13,8 @@ from tf2_ros import TransformBroadcaster
 
 class EncoderOdometry(Node):
 
-    def __init__(self):
-        super().__init__('encoder_odometry')
+    def __init__(self, **kwargs):
+        super().__init__('encoder_odometry', **kwargs)
 
         self.declare_parameter('odom_publish_rate_hz', 30.0)
         self.declare_parameter('path_publish_rate_hz', 5.0)

@@ -11,10 +11,13 @@ from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry
 from nav_msgs.msg import Path
 import rclpy
+from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy
 from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
+
+from odom_pkg.encoder_odometry import EncoderOdometry
 
 
 class EkfEncoderImuOdometry(Node):
@@ -77,8 +80,7 @@ class EkfEncoderImuOdometry(Node):
 
         self.get_logger().info(f'Running EKF with params: {params_file}')
         self.get_logger().info(
-            'EKF inputs (/odom/encoder, /imu/data) must be published externally; '
-            'run encoder_odometry and the IMU publisher separately.'
+            'EKF fuses /odom/encoder + /imu/data. /imu/data must be published externally.'
         )
         self.get_logger().info(
             f'Building path from {self.odom_topic} -> {self.path_topic}'
@@ -174,15 +176,29 @@ class EkfEncoderImuOdometry(Node):
 def parse_args(argv):
     odom_share = get_package_share_directory('odom_pkg')
     default_params = os.path.join(odom_share, 'config', 'ekf_encoder_imu.yaml')
+    default_odom_params = os.path.join(odom_share, 'config', 'odom_params.yaml')
 
     parser = argparse.ArgumentParser(
         description='Run the encoder+IMU EKF filter and publish its filtered path. '
-        'The EKF inputs (/odom/encoder, /imu/data) must be published externally.'
+        'Publishes /odom/encoder in-process (unless --external-encoder); '
+        '/imu/data must be published externally.'
     )
     parser.add_argument(
         '--params-file',
         default=default_params,
         help='Parameter file for robot_localization ekf_node.',
+    )
+    parser.add_argument(
+        '--odom-params-file',
+        default=default_odom_params,
+        help='Parameter file for the in-process encoder_odometry.',
+    )
+    parser.add_argument(
+        '--external-encoder',
+        action='store_false',
+        dest='run_encoder_odometry',
+        help='Do not publish /odom/encoder in-process; '
+        'expect it from an externally launched encoder_odometry.',
     )
     return parser.parse_known_args(argv[1:])
 
@@ -192,19 +208,45 @@ def main(args=None):
     parsed_args, ros_args = parse_args(argv)
 
     rclpy.init(args=[argv[0], *ros_args])
-    node = None
+    executor = SingleThreadedExecutor()
+    ekf_node = None
+    encoder_node = None
     return_code = 0
     try:
-        node = EkfEncoderImuOdometry(parsed_args.params_file)
-        rclpy.spin(node)
-        if node.ekf_return_code not in (None, 0):
+        ekf_node = EkfEncoderImuOdometry(parsed_args.params_file)
+        executor.add_node(ekf_node)
+
+        if parsed_args.run_encoder_odometry:
+            encoder_node = EncoderOdometry(
+                cli_args=[
+                    '--ros-args',
+                    '--params-file',
+                    parsed_args.odom_params_file,
+                    '-p',
+                    'publish_tf:=false',
+                ]
+            )
+            executor.add_node(encoder_node)
+            ekf_node.get_logger().info(
+                'Publishing /odom/encoder in-process (encoder_odometry integrated).'
+            )
+        else:
+            ekf_node.get_logger().info(
+                'Expecting /odom/encoder from an external encoder_odometry.'
+            )
+
+        executor.spin()
+        if ekf_node.ekf_return_code not in (None, 0):
             return_code = 1
     except KeyboardInterrupt:
         pass
     finally:
-        if node is not None:
-            node.stop_child_processes()
-            node.destroy_node()
+        if ekf_node is not None:
+            ekf_node.stop_child_processes()
+        if encoder_node is not None:
+            encoder_node.destroy_node()
+        if ekf_node is not None:
+            ekf_node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()
 
