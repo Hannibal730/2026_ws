@@ -1,4 +1,4 @@
-ekf_filter_node:
+ekf_encoder_imu_filter_node:
   ros__parameters:
     frequency: 50.0
     sensor_timeout: 0.2
@@ -14,7 +14,7 @@ ekf_filter_node:
     world_frame: odom
     publish_tf: true
 
-    odom0: /encoder/odom
+    odom0: /odom/encoder
     odom0_config: [
       false, false, false,
       false, false, false,
