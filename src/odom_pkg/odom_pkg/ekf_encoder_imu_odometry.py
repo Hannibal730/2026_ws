@@ -28,7 +28,7 @@ class EkfEncoderImuOdometry(Node):
         self.declare_parameter('path_topic', '/odom/ekf_encoder_imu/path')
         self.declare_parameter('path_min_distance', 0.02)
         self.declare_parameter('path_max_length', 2000)
-        self.declare_parameter('republish_rate_hz', 2.0)
+        self.declare_parameter('republish_rate_hz', 5.0)
 
         self.odom_topic = self.get_parameter('odom_topic').value
         self.path_topic = self.get_parameter('path_topic').value
@@ -102,7 +102,6 @@ class EkfEncoderImuOdometry(Node):
                 current_position[1] - self.last_position[1],
             )
             if distance < self.path_min_distance:
-                self.republish_path()
                 return
 
         self.last_position = current_position
@@ -115,7 +114,6 @@ class EkfEncoderImuOdometry(Node):
         self.path.header.frame_id = msg.header.frame_id
         self.path.poses.append(pose)
         self.path.poses = self.path.poses[-self.path_max_length:]
-        self.republish_path()
 
     def republish_path(self):
         if not self.path.poses:
