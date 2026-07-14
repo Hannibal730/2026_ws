@@ -39,7 +39,7 @@ from geometry_msgs.msg import Twist
 import serial
 
 
-class VehicleSerialBridge(Node):
+class SerialBridge(Node):
     def __init__(self):
         super().__init__('serial_bridge')
 
@@ -328,7 +328,7 @@ def main(args=None):
     rclpy.init(args=args)
     node = None
     try:
-        node = VehicleSerialBridge()
+        node = SerialBridge()
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass

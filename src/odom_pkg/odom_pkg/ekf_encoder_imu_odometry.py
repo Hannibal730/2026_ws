@@ -72,7 +72,7 @@ class EkfEncoderImuOdometry(Node):
                 '--params-file',
                 params_file,
                 '-r',
-                '__node:=ekf_encoder_imu_filter_node',
+                '__node:=ekf_encoder_imu_node',
                 '-r',
                 'odometry/filtered:=/odom/ekf_encoder_imu',
             ]
@@ -145,7 +145,7 @@ class EkfEncoderImuOdometry(Node):
 
         self.ekf_return_code = ekf_return_code
         self.get_logger().error(
-            f'ekf_encoder_imu_filter_node exited with code {ekf_return_code}'
+            f'ekf_encoder_imu_node exited with code {ekf_return_code}'
         )
         rclpy.shutdown()
 
@@ -173,7 +173,7 @@ class EkfEncoderImuOdometry(Node):
 
 def parse_args(argv):
     odom_share = get_package_share_directory('odom_pkg')
-    default_params = os.path.join(odom_share, 'config', 'ekf_encoder_imu.yaml')
+    default_params = os.path.join(odom_share, 'config', 'ekf_encoder_imu_params.yaml')
     default_odom_params = os.path.join(odom_share, 'config', 'odom_params.yaml')
 
     parser = argparse.ArgumentParser(

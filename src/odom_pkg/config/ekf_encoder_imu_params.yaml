@@ -1,4 +1,4 @@
-ekf_encoder_imu_filter_node:
+ekf_encoder_imu_node:
   ros__parameters:
     frequency: 50.0
     sensor_timeout: 0.2
