@@ -77,7 +77,7 @@ ros2 run odom_pkg ekf_encoder_imu_odometry \
 
 ## 1. `/odom/ekf_encoder_imu` 입력
 
-MPPI는 `src/mppi_bringup/config/mppi_controller.yaml`에서 아래처럼 `/odom/ekf_encoder_imu`를 사용한다.
+MPPI는 `src/mppi_bringup_pkg/config/mppi_controller.yaml`에서 아래처럼 `/odom/ekf_encoder_imu`를 사용한다.
 
 ```yaml
 controller_server:
@@ -130,7 +130,7 @@ sv
 sr
 si
 
-ros2 launch mppi_bringup mppi_controller.launch.py
+ros2 launch mppi_bringup_pkg mppi_controller.launch.py
 ```
 
 `/controller_server`와 `/planner_server`가 모두 `active [3]`이면 RViz goal planning과 MPPI controller가 실행 준비된 상태다.
@@ -156,14 +156,14 @@ ros2 topic pub --once /mppi/csv_path nav_msgs/msg/Path "{header: {frame_id: odom
 실제 주행용 path는 `poses`에 최소 2개 이상의 `PoseStamped`를 넣어야 한다. CSV 파일을 바로 읽게 하려면:
 
 ```
-ros2 launch mppi_bringup mppi_controller.launch.py start_path_client:=false
+ros2 launch mppi_bringup_pkg mppi_controller.launch.py start_path_client:=false
 ```
 
 로 MPPI controller만 띄운 뒤, 별도 터미널에서 CSV용 path client를 실행한다.
 
 ```
-ros2 run mppi_bringup mppi_path_client --ros-args \
-  --params-file src/mppi_bringup/config/mppi_controller.yaml \
+ros2 run mppi_bringup_pkg mppi_path_client --ros-args \
+  --params-file src/mppi_bringup_pkg/config/mppi_controller.yaml \
   -p csv_file_path:=/absolute/path/to/path.csv \
   -p auto_send_csv:=true
 ```

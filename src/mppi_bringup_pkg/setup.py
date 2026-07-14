@@ -3,7 +3,7 @@ import os
 
 from setuptools import find_packages, setup
 
-package_name = 'mppi_bringup'
+package_name = 'mppi_bringup_pkg'
 
 setup(
     name=package_name,
@@ -24,7 +24,7 @@ setup(
     license='TODO: License declaration',
     entry_points={
         'console_scripts': [
-            'mppi_path_client = mppi_bringup.mppi_path_client:main',
+            'mppi_path_client = mppi_bringup_pkg.mppi_path_client:main',
         ],
     },
 )

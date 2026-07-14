@@ -239,20 +239,20 @@ map -> odom -> base_link
 
 ## 7. 개발 패키지 구성
 
-현재 워크스페이스 안에 `mppi_bringup` 패키지를 추가한다.
+현재 워크스페이스 안에 `mppi_bringup_pkg` 패키지를 추가한다.
 
 ```text
 src/
 ├── navigation2/                  # Nav2 Humble 소스
 ├── odom_pkg/                     # /odom/ekf_encoder_imu 제공
-└── mppi_bringup/
+└── mppi_bringup_pkg/
     ├── package.xml
     ├── setup.py
     ├── config/
     │   └── mppi_controller.yaml
     ├── launch/
     │   └── mppi_controller.launch.py
-    └── mppi_bringup/
+    └── mppi_bringup_pkg/
         └── mppi_path_client.py
 ```
 
@@ -271,7 +271,7 @@ src/
 파일 예시:
 
 ```text
-src/mppi_bringup/config/mppi_controller.yaml
+src/mppi_bringup_pkg/config/mppi_controller.yaml
 ```
 
 초기 검증용 최소 설정:
@@ -664,17 +664,17 @@ cd /home/hannibal/Mando2026_ws
 sv
 sr
 
-rosdep install --from-paths src/navigation2 src/mppi_bringup --ignore-src -r -y
+rosdep install --from-paths src/navigation2 src/mppi_bringup_pkg --ignore-src -r -y
 
 colcon build --symlink-install \
-  --base-paths src/navigation2 src/mppi_bringup \
+  --base-paths src/navigation2 src/mppi_bringup_pkg \
   --packages-up-to \
     nav2_controller \
     nav2_mppi_controller \
     nav2_planner \
     nav2_smac_planner \
     nav2_lifecycle_manager \
-    mppi_bringup \
+    mppi_bringup_pkg \
   --allow-overriding \
     nav_2d_msgs \
     nav_2d_utils \
@@ -704,7 +704,7 @@ ros2 pkg executables nav2_controller
 
 주의:
 
-- 워크스페이스 안에 다른 Nav2 복사본이 있으면 `colcon`이 같은 패키지를 두 번 발견할 수 있다. 따라서 위처럼 `--base-paths src/navigation2 src/mppi_bringup`을 반드시 붙여 현재 프로젝트의 Nav2만 discovery 하도록 제한한다.
+- 워크스페이스 안에 다른 Nav2 복사본이 있으면 `colcon`이 같은 패키지를 두 번 발견할 수 있다. 따라서 위처럼 `--base-paths src/navigation2 src/mppi_bringup_pkg`을 반드시 붙여 현재 프로젝트의 Nav2만 discovery 하도록 제한한다.
 - `nav2_util` 테스트는 `test_msgs` 같은 테스트 전용 의존성을 요구한다. MPPI 실행에는 테스트 타깃이 필요 없으므로 `--cmake-args -DBUILD_TESTING=OFF`로 끈다.
 - `--packages-up-to`가 끌고 오는 `nav_2d_msgs`, `nav_2d_utils`, `nav2_map_server`, `nav2_voxel_grid`도 `/opt/ros/humble`에 이미 있으므로 override 경고를 없애려면 `--allow-overriding` 목록에 함께 넣는다.
 
@@ -731,7 +731,7 @@ node_names: ["planner_server", "controller_server"]
 실행:
 
 ```bash
-ros2 launch mppi_bringup mppi_controller.launch.py
+ros2 launch mppi_bringup_pkg mppi_controller.launch.py
 ```
 
 확인:
@@ -817,8 +817,8 @@ ros2 topic echo /mppi/active_path
 CSV 파일을 바로 읽어 MPPI에 보내려면 launch 후 별도 실행으로 다음처럼 사용할 수 있다.
 
 ```bash
-ros2 run mppi_bringup mppi_path_client --ros-args \
-  --params-file src/mppi_bringup/config/mppi_controller.yaml \
+ros2 run mppi_bringup_pkg mppi_path_client --ros-args \
+  --params-file src/mppi_bringup_pkg/config/mppi_controller.yaml \
   -p csv_file_path:=/absolute/path/to/path.csv \
   -p auto_send_csv:=true
 ```

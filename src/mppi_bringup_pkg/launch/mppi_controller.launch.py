@@ -9,7 +9,7 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    package_share = get_package_share_directory('mppi_bringup')
+    package_share = get_package_share_directory('mppi_bringup_pkg')
     default_params = os.path.join(package_share, 'config', 'mppi_controller.yaml')
 
     params_file = LaunchConfiguration('params_file')
@@ -51,7 +51,7 @@ def generate_launch_description():
     )
 
     path_client = Node(
-        package='mppi_bringup',
+        package='mppi_bringup_pkg',
         executable='mppi_path_client',
         name='mppi_path_client',
         output='screen',

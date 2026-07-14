@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>mppi_bringup</name>
+  <name>mppi_bringup_pkg</name>
   <version>0.0.0</version>
   <description>Bringup and path clients for Nav2 MPPI control.</description>
   <maintainer email="e2b@e2box.co.kr">e2box</maintainer>
