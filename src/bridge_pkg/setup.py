@@ -15,11 +15,11 @@ setup(
     zip_safe=True,
     maintainer='e2box',
     maintainer_email='e2b@e2box.co.kr',
-    description='Vehicle serial bridge node for encoder feedback and cmd_vel control.',
+    description='Serial bridge node for encoder feedback and cmd_vel control.',
     license='TODO: License declaration',
     entry_points={
         'console_scripts': [
-            'vehicle_serial_bridge = bridge_pkg.vehicle_serial_bridge:main',
+            'serial_bridge = bridge_pkg.serial_bridge:main',
         ],
     },
 )
