@@ -6,10 +6,14 @@ from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import TransformStamped
 from nav_msgs.msg import Odometry
 from nav_msgs.msg import Path
+from rclpy.clock import Clock
+from rclpy.clock import ClockType
 from rclpy.node import Node
 from std_msgs.msg import Float64
 from tf2_ros import StaticTransformBroadcaster
 from tf2_ros import TransformBroadcaster
+
+from odom_pkg.encoder_odometry import EncoderWatchdog
 
 
 class EncoderImuOdometry(Node):
@@ -22,6 +26,7 @@ class EncoderImuOdometry(Node):
         self.declare_parameter('path_min_distance', 0.02)
         self.declare_parameter('path_max_length', 300)
         self.declare_parameter('max_dt_sec', 0.2)
+        self.declare_parameter('encoder_timeout_sec', 0.1)
         self.declare_parameter('sensor_timeout_sec', 0.2)
         self.declare_parameter('odom_frame_id', 'odom')
         self.declare_parameter('base_frame_id', 'base_link')
@@ -38,6 +43,9 @@ class EncoderImuOdometry(Node):
         self.path_min_distance = float(self.get_parameter('path_min_distance').value)
         self.path_max_length = int(self.get_parameter('path_max_length').value)
         self.max_dt_sec = float(self.get_parameter('max_dt_sec').value)
+        self.encoder_timeout_sec = float(
+            self.get_parameter('encoder_timeout_sec').value
+        )
         self.sensor_timeout_sec = float(self.get_parameter('sensor_timeout_sec').value)
         self.odom_frame_id = self.get_parameter('odom_frame_id').value
         self.base_frame_id = self.get_parameter('base_frame_id').value
@@ -60,6 +68,8 @@ class EncoderImuOdometry(Node):
         self.last_path_position = None
         self.last_path_publish_time = None
         self.last_log_times = {}
+        self.steady_clock = Clock(clock_type=ClockType.STEADY_TIME)
+        self.encoder_watchdog = EncoderWatchdog(self.encoder_timeout_sec)
 
         self.encoder_imu_odom_publisher = self.create_publisher(Odometry, '/odom/encoder_imu', 10)
         self.path_publisher = self.create_publisher(Path, '/odom/encoder_imu/path', 10)
@@ -78,7 +88,11 @@ class EncoderImuOdometry(Node):
 
         self.path = Path()
         self.path.header.frame_id = self.odom_frame_id
-        self.odom_timer = self.create_timer(self.odom_publish_period, self.timer_callback)
+        self.odom_timer = self.create_timer(
+            self.odom_publish_period,
+            self.timer_callback,
+            clock=self.steady_clock,
+        )
         self.path_timer = self.create_timer(
             self.path_publish_period if self.path_publish_period > 0.0 else 0.2,
             self.publish_path,
@@ -89,6 +103,10 @@ class EncoderImuOdometry(Node):
         self.get_logger().info(
             f'Raw encoder+IMU odometry: distance=/encoder/distance, '
             f'speed=/encoder/speed, heading={heading_topic_log}'
+        )
+        self.get_logger().info(
+            f'Encoder watchdog enabled: timeout={self.encoder_timeout_sec:.3f}s, '
+            f'output=/odom/encoder_imu'
         )
 
     def publish_sensor_transforms(self):
@@ -123,6 +141,10 @@ class EncoderImuOdometry(Node):
     def speed_callback(self, msg):
         self.last_speed = msg.data
         self.last_speed_time = self.get_clock().now().nanoseconds * 1e-9
+        steady_time = self.steady_clock.now().nanoseconds * 1e-9
+        recovered = self.encoder_watchdog.record_sample(steady_time)
+        if recovered:
+            self.get_logger().info('Encoder speed reception recovered.')
 
     def distance_callback(self, msg):
         stamp_time = self.get_clock().now().nanoseconds * 1e-9
@@ -140,18 +162,34 @@ class EncoderImuOdometry(Node):
     def timer_callback(self):
         stamp = self.get_clock().now()
         stamp_time = stamp.nanoseconds * 1e-9
+        steady_time = self.steady_clock.now().nanoseconds * 1e-9
 
         if self.last_time is None:
-            self.last_time = stamp_time
+            self.last_time = steady_time
             return
 
-        dt = stamp_time - self.last_time
-        self.last_time = stamp_time
+        dt = steady_time - self.last_time
+        self.last_time = steady_time
         if dt <= 0.0 or dt > self.max_dt_sec:
             self.log_throttled('dt', f'Ignoring odometry update with invalid dt={dt:.4f}', 'warn')
             return
 
-        speed = self.value_if_fresh(self.last_speed, self.last_speed_time, stamp_time, 'encoder_speed')
+        speed_fresh, just_timed_out, elapsed_sec = self.encoder_watchdog.check(
+            steady_time
+        )
+        speed = self.last_speed if speed_fresh else 0.0
+        if elapsed_sec is None:
+            self.log_throttled(
+                'encoder_speed',
+                'Waiting for encoder_speed samples.',
+                'warn',
+            )
+        elif just_timed_out:
+            self.get_logger().warn(
+                f'Encoder speed timed out after {elapsed_sec:.3f}s; '
+                'publishing zero velocity on /odom/encoder_imu.'
+            )
+
         yaw = self.value_if_fresh(self.yaw, self.last_heading_time, stamp_time, 'imu_heading')
         yaw_rate = self.value_if_fresh(self.yaw_rate, self.last_heading_time, stamp_time, 'imu_heading_rate')
         self.value_if_fresh(self.encoder_distance, self.last_distance_time, stamp_time, 'encoder_distance')

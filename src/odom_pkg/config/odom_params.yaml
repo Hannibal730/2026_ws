@@ -50,6 +50,7 @@ encoder_imu_odometry:
     path_min_distance: 0.02
     path_max_length: 2000
     max_dt_sec: 0.2
+    encoder_timeout_sec: 0.1
     sensor_timeout_sec: 0.2
     odom_frame_id: odom
     base_frame_id: base_link
