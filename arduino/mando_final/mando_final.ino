@@ -19,9 +19,9 @@
 #define MANUAL_MODE 1400
 #define AUTO_MODE 1700
 
-#define POT_MAX 977
-#define POT_MIN 0
-#define MAX_STEER_TIRE_DEG 24
+#define POT_MAX 1021              // 조향 포텐셔미터 최대 ADC 값(한쪽 풀조향 센서값). 여기에 도달하면 MAX_STEER_TIRE_DEG 라고 인식해버림.
+#define POT_MIN 0                 // 조향 포텐셔미터 최소 ADC 값(반대쪽 풀조향 센서값) 여기에 도달하면 - MAX_STEER_TIRE_DEG 라고 인식해버림.
+#define MAX_STEER_TIRE_DEG 24     // 타이어 기준 최대 조향각[deg], SA 명령/포텐셔미터 각도 매핑 한계
 
 #define KP 0.05
 #define KI 0.0

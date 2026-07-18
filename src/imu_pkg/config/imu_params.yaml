@@ -1,6 +1,6 @@
 imu_publisher:
   ros__parameters:
-    serial_port: /dev/ttyACM1
+    serial_port: /dev/ttyUSB0
     baudrate: 115200
     accel_x_sign: 1.0
     accel_y_sign: -1.0
