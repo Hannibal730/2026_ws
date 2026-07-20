@@ -5,7 +5,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip3 install -r requirements.txt
 sudo apt update
-sudo apt install -y libasio-dev ros-humble-diagnostic-updater ros-humble-nmea-msgs
+sudo apt install -y libasio-dev ros-humble-diagnostic-updater ros-humble-nmea-msgs ros-humble-bondcpp ros-humble-test-msgs behaviortree-cpp-v3 libgraphicsmagick++1-dev libceres-dev libxtensor-dev ros-humble-nanoflann ros-humble-ompl ros-humble-gazebo-ros-pkgs
 ```
 
 # 기본 준비
