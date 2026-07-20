@@ -69,7 +69,7 @@ def generate_launch_description():
     return launch.LaunchDescription([
                                      DeclareLaunchArgument(
                                          'serial_port',
-                                         default_value='/dev/ttyACM0',
+                                         default_value='/dev/ttyACM1',
                                          description='Serial device for the ZED-F9R receiver.',
                                      ),
                                      DeclareLaunchArgument(

@@ -324,6 +324,9 @@ void UbloxNode::getRosParams() {
   this->declare_parameter("gnss.galileo", false);
   this->declare_parameter("gnss.beidou", false);
   this->declare_parameter("gnss.imes", false);
+  // QZSS signal configuration (CFG-GNSS flags, bits 16-23).
+  // Defaults to L1C/A only; dual-band receivers typically also enable L2C.
+  this->declare_parameter("gnss.qzss_sig_cfg", 65536);
   max_sbas_ = declareRosIntParameter<uint8_t>(this, "sbas.max", 0); // Maximum number of SBAS channels
   sbas_usage_ = declareRosIntParameter<uint8_t>(this, "sbas.usage", 0);
   dynamic_model_ = this->declare_parameter("dynamic_model", std::string("portable"));

@@ -178,6 +178,9 @@ void AdrUdrProduct::callbackEsfMEAS(const ublox_msgs::msg::EsfMEAS &m) {
         }
       } else if (data_type == 12) {
         // RCLCPP_INFO("Temperature in celsius: %f", data_value * deg_c);
+      } else if (data_type == 10 || data_type == 11) {
+        // Speed tick / speed. Reported by the receiver even when no wheel tick
+        // signal is wired, in which case the value stays 0. Not used here.
       } else {
         RCLCPP_INFO(node_->get_logger(), "data_type: %u", data_type);
         RCLCPP_INFO(node_->get_logger(), "data_value: %u", data_value);

@@ -2,7 +2,7 @@
 ublox_gps_node:
   ros__parameters:
     debug: 1                    # Range 0-4 (0 means no debug statements will print)
-    device: /dev/ttyACM1
+    device: /dev/ttyACM0
     
     frame_id: f9p_link
     rate: 15.0                   # in Hz
@@ -15,10 +15,14 @@ ublox_gps_node:
       baudrate: 115200
      
     gnss:
+      sbas: true                # Board already has SBAS enabled; matching it
+                                # here avoids a cold reset on every launch
       glonass: true
       beidou: true
       gps: true
       qzss: true
+      qzss_sig_cfg: 1114112     # 0x110000 = L1C/A + L2C, matches the board's
+                                # current setting so no cold reset is triggered
       galileo: true
       imes: false
     
