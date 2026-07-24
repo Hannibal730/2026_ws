@@ -45,16 +45,6 @@ ros2 run odom_pkg encoder_odometry --ros-args \
   -p publish_tf:=false
 ```
 
-## `/odom/imu*`
-IMU 단독 dead-reckoning (gyro z yaw 적분 + 전진 가속도 적분).
-시작 시 센서를 완전히 정지시킨 채 캘리브레이션(기본 5초)이 진행된다.
-파라미터 수정은 `src/odom_pkg/config/odom_params.yaml`에서 수정한다.
-```
-ros2 run odom_pkg imu_odometry --ros-args \
-  --params-file src/odom_pkg/config/odom_params.yaml \
-  -p publish_tf:=false
-```
-
 ## `/odom/encoder_imu*`
 휠 엔코더와 imu의 dead-reckoning (엔코더+IMU 단순 적분).
 파라미터 수정은 `src/odom_pkg/config/odom_params.yaml`에서 수정한다.

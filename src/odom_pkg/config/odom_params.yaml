@@ -1,33 +1,3 @@
-imu_odometry:
-  ros__parameters:
-    odom_topic: /odom/imu
-    path_topic: /odom/imu/path
-    publish_tf: false
-    calibration_duration_sec: 5.0
-    calibration_min_samples: 200
-    forward_accel_axis: "y"
-    left_accel_axis: "x"
-    yaw_gyro_axis: "z"
-    max_dt_sec: 0.2
-    enable_stationary_guard: true
-    forward_accel_deadband: 0.06
-    motion_start_accel_threshold: 0.12
-    motion_continue_accel_deadband: 0.04
-    motion_hold_sec: 1.0
-    yaw_rate_deadband: 0.035
-    tilt_guard_gyro_threshold: 0.35
-    stationary_hold_sec: 0.9
-    speed_zero_threshold: 0.025
-    speed_decay_rate: 0.8
-    forward_accel_gain: 1.5
-    max_forward_speed: 1.5
-    odom_publish_rate_hz: 100.0
-    path_publish_rate_hz: 5.0
-    path_min_distance: 0.02
-    path_max_length: 2000
-    odom_frame_id: odom
-    base_frame_id: base_link
-
 encoder_odometry:
   ros__parameters:
     publish_tf: false

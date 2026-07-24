@@ -1,5 +1,7 @@
 import math
 
+# Archived outside odom_pkg; kept only for IMU-only odometry reference/debugging.
+
 import rclpy
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import TransformStamped

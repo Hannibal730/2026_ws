@@ -23,7 +23,6 @@ setup(
     license='TODO: License declaration',
     entry_points={
         'console_scripts': [
-            'imu_odometry = odom_pkg.imu_odometry:main',
             'encoder_odometry = odom_pkg.encoder_odometry:main',
             'encoder_imu_odometry = odom_pkg.encoder_imu_odometry:main',
             'ekf_encoder_imu_odometry = odom_pkg.ekf_encoder_imu_odometry:main',
