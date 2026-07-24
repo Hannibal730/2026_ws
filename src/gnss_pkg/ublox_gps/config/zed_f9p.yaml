@@ -5,7 +5,7 @@ ublox_gps_node:
     device: /dev/ttyACM0
     
     frame_id: f9p_link
-    rate: 15.0                   # in Hz
+    rate: 25.0                   # in Hz
     nav_rate: 1                 
                                 
     dynamic_model: automotive

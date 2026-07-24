@@ -3,10 +3,17 @@ ublox_gps_node:
   ros__parameters:
     debug: 1                    # Range 0-4 (0 means no debug statements will print)
     device: /dev/ttyACM1
+
+    # F9R(HPS 1.40 / PROTVER 33.40)은 legacy UBX-CFG-* 메시지를 NACK함.
+    # 드라이버의 시작 시 자동설정을 끄고, rate/GNSS/메시지 출력은
+    # u-center에서 미리 설정해 플래시(BBR/Flash)에 저장해서 사용.
+    config_on_startup: false
     
     frame_id: f9r_link
-    rate: 15.0                   # in Hz
-    nav_rate: 1                 
+    rate: 1.0                    # in Hz — F9R(센서퓨전)은 기본 항법 해를 1Hz로
+                                 # 둬야 함. 15Hz/10Hz는 CFG-RATE가 NACK됨.
+                                 # 고주파 위치가 필요하면 아래 publish.hnr.pvt 사용
+    nav_rate: 1
                                 
     dynamic_model: automotive
     #사람이 들고 다니는 장치 기준 portable. 차량이면 automotive, 고정 기지국이면 stationary
