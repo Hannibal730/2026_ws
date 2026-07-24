@@ -24,10 +24,10 @@ from odom_pkg.encoder_odometry import EncoderOdometry
 
 class EkfEncoderImuOdometry(Node):
     def __init__(self, params_file):
-        super().__init__('ekf_encoder_imu_odometry')
+        super().__init__('local_path_viewer_node')
 
         self.declare_parameter('odom_topic', '/odom/ekf_encoder_imu')
-        self.declare_parameter('path_topic', '/odom/ekf_encoder_imu/path')
+        self.declare_parameter('path_topic', '/path/local_odometry')
         self.declare_parameter('path_min_distance', 0.02)
         self.declare_parameter('path_max_length', 2000)
         self.declare_parameter('republish_rate_hz', 5.0)
@@ -160,7 +160,7 @@ class EkfEncoderImuOdometry(Node):
         now = self.get_clock().now().nanoseconds * 1e-9
         age = now - self.last_odom_time
         self.get_logger().info(
-            f'ekf_encoder_imu_odometry status: odom_count={self.odom_count}, '
+            f'local_path_viewer_node status: odom_count={self.odom_count}, '
             f'path_poses={len(self.path.poses)}, '
             f'path_publish_count={self.path_publish_count}, '
             f'last_odom_age={age:.2f}s'

@@ -107,7 +107,7 @@ map -> odom -> base_link
 
 주의할 점:
 
-- `/odom/ekf_encoder_imu/path`는 지나온 궤적을 기록한 시각화용 path이다. MPPI가 따라가야 할 계획 경로로 쓰면 안 된다.
+- `/path/local_odometry`는 지나온 궤적을 기록한 시각화용 path이다. MPPI가 따라가야 할 계획 경로로 쓰면 안 된다.
 - MPPI에 넣을 경로는 별도의 `nav_msgs/Path`로 생성하고, `FollowPath` action client가 `controller_server/follow_path`로 보내야 한다.
 
 ---

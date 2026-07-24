@@ -108,7 +108,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /odom/ekf_encoder_imu/path
+        Value: /path/local_odometry
       Value: true
     - Class: rviz_default_plugins/Axes
       Enabled: true

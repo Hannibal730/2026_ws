@@ -36,6 +36,9 @@ ros2 run imu_pkg imu_publisher --ros-args \
 ```
 
 # 오도메트리 생성 노드
+아래 `/odom/encoder*`, `/odom/encoder_imu*` 항목은 개별 테스트용이다.
+EKF 기반 주행/시각화만 할 때는 별도로 실행하지 않아도 된다.
+
 ## `/odom/encoder*`
 휠 엔코더 단독 dead-reckoning
 파라미터 수정은 `src/odom_pkg/config/odom_params.yaml`에서 수정한다.
@@ -55,7 +58,7 @@ ros2 run odom_pkg encoder_imu_odometry --ros-args \
 ```
 
 ## `/odom/ekf_encoder_imu*`
-EKF는 `/odom/encoder` + `/imu/data`를 융합한다. 이 노드는 `encoder_odometry`를 **같은 프로세스에서 내부 실행**(`publish_tf:=false`)하여 `/odom/encoder`를 직접 발행하고, `ekf_node`를 띄운 뒤 필터 결과 path를 만든다. 따라서 별도로 `encoder_odometry`를 실행할 필요는 없고, `/imu/data`(위 `/imu/*` 항목)만 미리 켜져 있으면 된다.
+EKF는 `/odom/encoder` + `/imu/data`를 융합한다. 이 실행 파일은 `encoder_odometry`를 **같은 프로세스에서 내부 실행**(`publish_tf:=false`)하여 `/odom/encoder`를 직접 발행하고, `ekf_node`를 `/ekf_encoder_imu_node` 이름으로 띄운다. 그래프에는 path 시각화 보조 노드가 `/local_path_viewer_node`로 보이며, 필터 결과를 받아 `/path/local_odometry`를 발행한다. 따라서 별도로 `encoder_odometry`를 실행할 필요는 없고, `/imu/data`(위 `/imu/*` 항목)만 미리 켜져 있으면 된다.
 EKF fusion 파라미터는 `src/odom_pkg/config/ekf_encoder_imu_params.yaml`에서 수정하고, 내부 실행되는 encoder odometry 파라미터는 `src/odom_pkg/config/odom_params.yaml`에서 수정한다.
 ```
 ros2 run odom_pkg ekf_encoder_imu_odometry \
@@ -74,6 +77,9 @@ controller_server:
   ros__parameters:
     odom_topic: /odom/ekf_encoder_imu
 ```
+
+EKF odom과 RViz용 로컬 궤적만 확인하려면 아래 터미널 1~3만 실행하면 된다.
+MPPI 제어까지 하려면 터미널 4도 추가로 실행한다.
 
 ## 2. 터미널 1 — 휠 엔코더 센서 실행
 
@@ -95,6 +101,17 @@ ros2 run imu_pkg imu_publisher --ros-args \
 ros2 run odom_pkg ekf_encoder_imu_odometry \
   --params-file src/odom_pkg/config/ekf_encoder_imu_params.yaml \
   --odom-params-file src/odom_pkg/config/odom_params.yaml
+```
+
+이 실행 후 핵심 출력은 아래와 같다.
+
+```text
+/ekf_encoder_imu_node
+  -> /odom/ekf_encoder_imu
+  -> /tf
+
+/local_path_viewer_node
+  -> /path/local_odometry
 ```
 
 ## 5. 터미널 4 — MPPI controller 실행
