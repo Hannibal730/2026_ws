@@ -8,6 +8,7 @@ import time
 
 from ament_index_python.packages import get_package_share_directory
 from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import TransformStamped
 from nav_msgs.msg import Odometry
 from nav_msgs.msg import Path
 import rclpy
@@ -16,6 +17,7 @@ from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy
 from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
+from tf2_ros import StaticTransformBroadcaster
 
 from odom_pkg.encoder_odometry import EncoderOdometry
 
@@ -29,12 +31,16 @@ class EkfEncoderImuOdometry(Node):
         self.declare_parameter('path_min_distance', 0.02)
         self.declare_parameter('path_max_length', 2000)
         self.declare_parameter('republish_rate_hz', 5.0)
+        self.declare_parameter('base_frame_id', 'base_link')
+        self.declare_parameter('imu_offset_x', 0.0)
 
         self.odom_topic = self.get_parameter('odom_topic').value
         self.path_topic = self.get_parameter('path_topic').value
         self.path_min_distance = float(self.get_parameter('path_min_distance').value)
         self.path_max_length = int(self.get_parameter('path_max_length').value)
         self.republish_rate_hz = float(self.get_parameter('republish_rate_hz').value)
+        self.base_frame_id = self.get_parameter('base_frame_id').value
+        self.imu_offset_x = float(self.get_parameter('imu_offset_x').value)
 
         self.path = Path()
         self.last_position = None
@@ -62,6 +68,11 @@ class EkfEncoderImuOdometry(Node):
         self.status_timer = self.create_timer(2.0, self.log_status)
         self.process_timer = self.create_timer(0.5, self.check_child_processes)
 
+        # robot_localization drops IMU samples if it cannot transform them into
+        # base_link, so base_link -> imu_link (and encoder_link) must exist.
+        self.static_tf_broadcaster = StaticTransformBroadcaster(self)
+        self.publish_sensor_transforms()
+
         self.ekf_process = subprocess.Popen(
             [
                 'ros2',
@@ -85,6 +96,23 @@ class EkfEncoderImuOdometry(Node):
         self.get_logger().info(
             f'Building path from {self.odom_topic} -> {self.path_topic}'
         )
+
+    def publish_sensor_transforms(self):
+        stamp = self.get_clock().now().to_msg()
+        transforms = []
+        for child_frame, x_offset in (
+            ('encoder_link', 0.0),
+            ('imu_link', self.imu_offset_x),
+        ):
+            transform = TransformStamped()
+            transform.header.stamp = stamp
+            transform.header.frame_id = self.base_frame_id
+            transform.child_frame_id = child_frame
+            transform.transform.translation.x = x_offset
+            transform.transform.rotation.w = 1.0
+            transforms.append(transform)
+
+        self.static_tf_broadcaster.sendTransform(transforms)
 
     def odom_callback(self, msg):
         self.last_odom_time = self.get_clock().now().nanoseconds * 1e-9

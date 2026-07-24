@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CycloneDDS xmlns="https://cdds.io/config"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="https://cdds.io/config https://raw.githubusercontent.com/eclipse-cyclonedds/cyclonedds/master/etc/cyclonedds.xsd">
+  <Domain Id="any">
+    <Discovery>
+      <!-- 기본값 MaxAutoParticipantIndex=9 (참가자 10개 한계) 때문에
+           "Failed to find a free participant index" 발생.
+           localhost-only(멀티캐스트 없음) 환경에서는 유니캐스트 디스커버리가
+           인덱스 0..Max 포트를 훑으므로, ParticipantIndex=none 대신
+           Max 값을 크게 올리는 것이 안전함. -->
+      <ParticipantIndex>auto</ParticipantIndex>
+      <MaxAutoParticipantIndex>100</MaxAutoParticipantIndex>
+    </Discovery>
+  </Domain>
+</CycloneDDS>
