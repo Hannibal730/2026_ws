@@ -1,0 +1,30 @@
+dual_gnss_map:
+  ros__parameters:
+    # Vehicle installation: ZED-F9P is rear, ZED-F9R is front.
+    rear_topic: /f9p/fix
+    front_topic: /f9r/fix
+    map_frame: map
+
+    # Competition mode. In this repository's ublox driver NavSatFix status=2
+    # means fixed carrier phase (RTK FIXED).
+    require_rtk_fixed: true
+    max_horizontal_stddev_m: 0.25
+
+    # F9P is faster than F9R in the supplied bags. Rear positions are linearly
+    # interpolated to the F9R timestamp before calculating rear -> front yaw.
+    sync_tolerance_sec: 0.09
+    max_interpolation_gap_sec: 0.12
+    pair_wait_sec: 0.10
+
+    # Measured FIXED range across 260720_spec_1 and spec_2: 0.72 to 1.18 m.
+    minimum_baseline_m: 0.65
+    maximum_baseline_m: 1.25
+    maximum_yaw_rate_deg_s: 120.0
+    heading_smoothing_alpha: 0.35
+    heading_timeout_sec: 0.50
+
+    # Bound RViz traffic and memory use during a long competition run.
+    publish_sensor_trails: true
+    max_trail_points: 1000
+    trail_min_distance_m: 0.05
+    trail_publish_period_sec: 1.0
